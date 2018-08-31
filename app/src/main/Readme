@@ -1,0 +1,2 @@
+The api key can be set in your gradle.properties after adding it to .gitignore.
+Within gradle.properties add a line with API_KEY="yourapikey"
