@@ -148,13 +148,14 @@ public class MoviesDetailActivity extends AppCompatActivity implements
         return new AsyncTaskLoader<Movie>(this) {
             Movie mMovieDetail = mMovie;
 
-            
+
             @Nullable
             @Override
             public Movie loadInBackground() {
                 int movieID = mMovieDetail.getMovieId();
 
-                URL movieReviewUrl = NetworkUtils.createUrl(MOVIE_BASE_URL+movieID+"reviews");
+                URL movieReviewUrl = NetworkUtils.createUrl(MOVIE_BASE_URL+movieID+"reviews"
+                +"?api_key="+API_KEY);
                 try {
                     getMovieReviews(movieReviewUrl);
                     setFavorite(movieID);
