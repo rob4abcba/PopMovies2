@@ -30,6 +30,7 @@ public class MovieReviewAdapter extends
 
     @Override
     public int getItemCount() {
+        if (null == mMovieReviews) return 0;
         return mMovieReviews.length;
     }
 
@@ -43,7 +44,7 @@ public class MovieReviewAdapter extends
 
         public MovieReviewAdapterViewHolder(View view){
             super(view);
-            mReviewContent = view.findViewById(R.id.movie_review_text);
+            mReviewContent = view.findViewById(R.id.movie_review_recyclerview);
 
         }
     }

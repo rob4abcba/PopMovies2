@@ -10,6 +10,7 @@
 
 
 <RelativeLayout
+    android:id="@+id/movie_detail_relative_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_weight="1">
@@ -41,7 +42,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/toggle_favorite"
-                android:layout_alignParentTop="true"/>
+                android:layout_alignParentTop="true"
+                android:paddingRight="16dp"/>
+
+            <Button
+                android:id="@+id/movie_trailer_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/view_trailer"
+                android:layout_toRightOf="@id/favorite_button"/>
 
         <TextView
             android:id="@+id/movie_rating_detail"
@@ -74,19 +83,14 @@
             android:paddingBottom="8dp"
             android:text="@string/movie_review"/>
 
-        <TextView
-            android:id="@+id/movie_review_text"
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/movie_review_recyclerview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/movie_synopsis_detail"
             android:paddingBottom="8dp"/>
 
-        <Button
-            android:id="@+id/movie_trailer_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/view_trailer"
-            android:layout_below="@id/movie_review_text"/>
+
 
         </RelativeLayout>
 

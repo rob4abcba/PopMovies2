@@ -9,9 +9,12 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,6 +35,9 @@ public class MoviesDetailActivity extends AppCompatActivity implements
     private TextView mReleaseDate;
     private TextView mSynopsis;
     private TextView mReview;
+    private RelativeLayout mRelativeLayout;
+    private LinearLayoutManager mReviewLayout;
+    private RecyclerView mReviewRecyclerView;
     private MovieReviewAdapter mMovieReviewAdapter;
     private Button mButton;
     private AppDatabase mAppDatabase;
@@ -54,13 +60,18 @@ public class MoviesDetailActivity extends AppCompatActivity implements
         mRating = (TextView) findViewById(R.id.movie_rating_detail);
         mReleaseDate = (TextView) findViewById(R.id.movie_release_date_detail);
         mSynopsis = (TextView) findViewById(R.id.movie_synopsis_detail);
+        mReview = findViewById(R.id.moviereviewtext);
 
+        mReviewRecyclerView = findViewById(R.id.movie_review_recyclerview);
+        mReviewLayout = new LinearLayoutManager(this);
+        mReviewRecyclerView.setLayoutManager(mReviewLayout);
+        mMovieReviewAdapter = new MovieReviewAdapter();
+        mReviewRecyclerView.setAdapter(mMovieReviewAdapter);
 
         Picasso.with(this).load(mMovie.getPosterPath()).into(mPoster);
         mRating.setText(Double.toString(mMovie.getRating())+" out of 10 stars");
         mReleaseDate.setText("     " + mMovie.getReleaseDate());
         mSynopsis.setText(mMovie.getSynopsis());
-        mReview = findViewById(R.id.movie_review_text);
 
         mButton = findViewById(R.id.favorite_button);
         favorite = false;
@@ -137,9 +148,7 @@ public class MoviesDetailActivity extends AppCompatActivity implements
         return new AsyncTaskLoader<Movie>(this) {
             Movie mMovieDetail = mMovie;
 
-
-
-
+            
             @Nullable
             @Override
             public Movie loadInBackground() {
