@@ -188,7 +188,7 @@ public class MoviesDetailActivity extends AppCompatActivity implements
     @Override
     public void onLoadFinished(@NonNull Loader<Movie> loader, Movie data) {
         mMovie = data;
-        data.getMovieReview();
+        mMovie.getMovieReview();
 
     }
 
