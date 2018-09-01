@@ -14,13 +14,13 @@ public interface MovieDao {
     LiveData<Movie[]> loadLiveMovies();
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    long insertFavoriteMovie(Movie movie);
+    void insertFavoriteMovie(Movie movie);
 
     @Query("SELECT * FROM `favorite movies` WHERE movieId = :id")
     Movie loadMovieByMovieId(String id);
 
     @Query("SELECT movieId FROM `favorite movies` WHERE movieId = :id")
-    long checkForFavorite(long id);
+    int checkForFavorite(int id);
 
     @Delete
     void deleteFavoriteMovie(Movie movie);

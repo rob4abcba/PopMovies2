@@ -20,7 +20,7 @@ public class Movie implements Parcelable{
     private MovieReview[] movieReview;
     @Ignore
     private MovieTrailer[] movieTrailer;
-    @Ignore
+
     public Movie(){}
 
 

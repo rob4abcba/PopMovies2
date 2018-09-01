@@ -1,5 +1,6 @@
 package com.example.android.popmovies2;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -8,8 +9,11 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
@@ -29,7 +33,11 @@ public class MoviesDetailActivity extends AppCompatActivity implements
     private TextView mSynopsis;
     private TextView mReview;
     private MovieReviewAdapter mMovieReviewAdapter;
+    private Button mButton;
+    private AppDatabase mAppDatabase;
+    private boolean favorite;
     private Movie mMovie;
+    private static final int MOVIE_LOADER_ID = 50;
     private static final String MOVIE_BASE_URL = "https://api.themoviedb.org/3/movie/";
     private static final String API_KEY = BuildConfig.API_KEY;
 
@@ -40,7 +48,7 @@ public class MoviesDetailActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_movies_detail);
 
-        Movie mMovie = (Movie) getIntent().getParcelableExtra(MOVIE_KEY);
+        mMovie = (Movie) getIntent().getParcelableExtra(MOVIE_KEY);
 
         mPoster = (ImageView) findViewById(R.id.movie_poster_detail);
         mRating = (TextView) findViewById(R.id.movie_rating_detail);
@@ -53,6 +61,70 @@ public class MoviesDetailActivity extends AppCompatActivity implements
         mReleaseDate.setText("     " + mMovie.getReleaseDate());
         mSynopsis.setText(mMovie.getSynopsis());
         mReview = findViewById(R.id.movie_review_text);
+
+        mButton = findViewById(R.id.favorite_button);
+        favorite = false;
+        mAppDatabase = AppDatabase.getInstance(getApplicationContext());
+
+        Intent intent = getIntent();
+
+        if (intent.hasExtra("Movie")){
+            mMovie = intent.getExtras().getParcelable("Movie");
+        }
+
+        final int loaderId = MOVIE_LOADER_ID;
+
+        final LoaderManager.LoaderCallbacks<Movie> callbacks = MoviesDetailActivity.this;
+        final Bundle bundle = null;
+
+        LoaderManager loaderManager = getSupportLoaderManager();
+        Loader<Movie> detailLoader = loaderManager.getLoader(loaderId);
+
+        if (detailLoader==null){
+            loaderManager.initLoader(loaderId,bundle,callbacks);
+        }else {
+            loaderManager.restartLoader(loaderId,bundle,callbacks);
+        }
+
+        mButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int id = mMovie.getMovieId();
+                String title = mMovie.getTitle();
+                String posterPath = mMovie.getPosterPath();
+                String synopsis = mMovie.getSynopsis();
+                Double rating = mMovie.getRating();
+                String releaseDate = mMovie.getReleaseDate();
+
+                final Movie movie = new Movie(id,title,posterPath,synopsis,rating,releaseDate);
+
+                if (favorite){
+                    AppExecutors.getInstance().getDiskIO().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            mAppDatabase.movieDao.deleteFavoriteMovie(movie);
+                            favorite=false;
+                            Toast.makeText(getApplicationContext(),
+                                    "Movie removed from favories!",
+                                    Toast.LENGTH_LONG).show();
+                        }
+                    });
+                } else {
+                    AppExecutors.getInstance().getDiskIO().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            mAppDatabase.movieDao.insertFavoriteMovie(movie);
+                            favorite=true;
+                            Toast.makeText(getApplicationContext(),
+                                    "Movie added to favorites!",
+                                    Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
+                getSupportLoaderManager().initLoader(loaderId,bundle,callbacks);
+
+            }
+        });
 
     }
 
@@ -76,11 +148,20 @@ public class MoviesDetailActivity extends AppCompatActivity implements
                 URL movieReviewUrl = NetworkUtils.createUrl(MOVIE_BASE_URL+movieID+"reviews");
                 try {
                     getMovieReviews(movieReviewUrl);
+                    setFavorite(movieID);
                     return mMovieDetail;
                 } catch (Exception e) {
                     return null;
                 }
 
+            }
+
+            private void setFavorite(int movieID) {
+                if (movieID == mAppDatabase.movieDao.checkForFavorite(movieID)){
+                    favorite=true;
+                }else {
+                    favorite=false;
+                }
             }
 
             private void getMovieReviews(URL movieReviewUrl) throws IOException, JSONException {
