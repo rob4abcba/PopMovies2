@@ -131,16 +131,16 @@ public class NetworkUtils {
 
     }
 
-    public static MovieReview[] reviewJson(String reviewJsonData) throws JSONException {
+    public static List<MovieReview> reviewJson(String reviewJsonData) throws JSONException {
         JSONObject reviewObject = new JSONObject(reviewJsonData);
         JSONArray jsonArray = reviewObject.getJSONArray("results");
-        MovieReview[] movieReviews = new MovieReview[jsonArray.length()];
+        List<MovieReview> movieReviews = new ArrayList<>(jsonArray.length()); //new List<MovieReview>[jsonArray.length()]
 
         for (int i = 0; i < jsonArray.length(); i++){
             MovieReview review = new MovieReview();
             JSONObject result = jsonArray.getJSONObject(i);
             review.setReviewContent(result.getString("content"));
-            movieReviews[i] = review;
+            movieReviews.set(i, review);
         }
         return movieReviews;
 

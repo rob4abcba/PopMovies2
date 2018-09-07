@@ -6,6 +6,9 @@ import android.arch.persistence.room.PrimaryKey;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.util.Arrays;
+import java.util.List;
+
 @Entity(tableName = "favorite movies")
 public class Movie implements Parcelable{
 
@@ -17,7 +20,7 @@ public class Movie implements Parcelable{
     private double rating;
     private String releaseDate;
     @Ignore
-    private MovieReview[] movieReview;
+    private List<MovieReview> movieReview;
     @Ignore
     private MovieTrailer[] movieTrailer;
 
@@ -84,11 +87,11 @@ public class Movie implements Parcelable{
         this.releaseDate = releaseDate;
     }
 
-    public MovieReview[] getMovieReview() {
+    public List<MovieReview> getMovieReview() {
         return movieReview;
     }
 
-    public void setMovieReview(MovieReview[] movieReview){
+    public void setMovieReview(List<MovieReview> movieReview){
         this.movieReview = movieReview;
     }
 
@@ -121,7 +124,7 @@ public class Movie implements Parcelable{
         synopsis = in.readString();
         releaseDate = in.readString();
         rating = in.readDouble();
-        movieReview = in.createTypedArray(MovieReview.CREATOR);
+        movieReview = Arrays.asList(in.createTypedArray(MovieReview.CREATOR));
         movieTrailer = in.createTypedArray(MovieTrailer.CREATOR);
     }
 
@@ -138,7 +141,7 @@ public class Movie implements Parcelable{
         dest.writeString(synopsis);
         dest.writeString(releaseDate);
         dest.writeDouble(rating);
-        dest.writeTypedArray(movieReview, 0);
+        dest.writeTypedList(movieReview);  //dest.writeTypedArray(movieReview, 0);
         dest.writeTypedArray(movieTrailer, 0);
 
     }

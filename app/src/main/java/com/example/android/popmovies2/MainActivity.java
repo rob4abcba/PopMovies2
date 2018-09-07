@@ -58,6 +58,11 @@ public class MainActivity extends AppCompatActivity implements
 
         PreferenceManager.getDefaultSharedPreferences(this)
                 .registerOnSharedPreferenceChangeListener(this);
+
+        int loaderId = MOVIE_LOADER_ID;
+        LoaderManager.LoaderCallbacks<List<Movie>> callbacks = MainActivity.this;
+        Bundle bundle = null;
+        getSupportLoaderManager().initLoader(loaderId,bundle,callbacks);
     }
 
     @Override

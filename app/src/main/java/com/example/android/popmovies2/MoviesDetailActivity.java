@@ -1,5 +1,6 @@
 package com.example.android.popmovies2;
 
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -24,12 +25,16 @@ import org.json.JSONException;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class MoviesDetailActivity extends AppCompatActivity implements
         LoaderManager.LoaderCallbacks<Movie>{
 
     private static final String MOVIE_KEY = "MOVIE_KEY";
 
+    private TextView mTitle;
     private ImageView mPoster;
     private TextView mRating;
     private TextView mReleaseDate;
@@ -39,11 +44,15 @@ public class MoviesDetailActivity extends AppCompatActivity implements
     private LinearLayoutManager mReviewLayout;
     private RecyclerView mReviewRecyclerView;
     private MovieReviewAdapter mMovieReviewAdapter;
+    private List<MovieReview> mReviews;
+    private String stringReviews = null;
+    private static String MOVIE_ID;
     private Button mButton;
     private AppDatabase mAppDatabase;
     private boolean favorite;
     private Movie mMovie;
     private static final int MOVIE_LOADER_ID = 50;
+    private static final int MOVIE_REVIEW_LOADER = 80;
     private static final String MOVIE_BASE_URL = "https://api.themoviedb.org/3/movie/";
     private static final String API_KEY = BuildConfig.API_KEY;
 
@@ -61,17 +70,22 @@ public class MoviesDetailActivity extends AppCompatActivity implements
         mReleaseDate = (TextView) findViewById(R.id.movie_release_date_detail);
         mSynopsis = (TextView) findViewById(R.id.movie_synopsis_detail);
         mReview = findViewById(R.id.moviereviewtext);
+        mRelativeLayout = findViewById(R.id.movie_detail_relative_layout);
 
         mReviewRecyclerView = findViewById(R.id.movie_review_recyclerview);
         mReviewLayout = new LinearLayoutManager(this);
         mReviewRecyclerView.setLayoutManager(mReviewLayout);
         mMovieReviewAdapter = new MovieReviewAdapter();
+        mMovieReviewAdapter.setMovieReviews(new ArrayList<MovieReview>());
+        mMovieReviewAdapter.setContext(getApplicationContext());
         mReviewRecyclerView.setAdapter(mMovieReviewAdapter);
+
 
         Picasso.with(this).load(mMovie.getPosterPath()).into(mPoster);
         mRating.setText(Double.toString(mMovie.getRating())+" out of 10 stars");
         mReleaseDate.setText("     " + mMovie.getReleaseDate());
         mSynopsis.setText(mMovie.getSynopsis());
+
 
         mButton = findViewById(R.id.favorite_button);
         favorite = false;
@@ -79,8 +93,8 @@ public class MoviesDetailActivity extends AppCompatActivity implements
 
         Intent intent = getIntent();
 
-        if (intent.hasExtra("Movie")){
-            mMovie = intent.getExtras().getParcelable("Movie");
+        if (intent.hasExtra("Movie_KEY")){
+            mMovie = intent.getExtras().getParcelable("Movie_KEY");
         }
 
         final int loaderId = MOVIE_LOADER_ID;
@@ -95,6 +109,22 @@ public class MoviesDetailActivity extends AppCompatActivity implements
             loaderManager.initLoader(loaderId,bundle,callbacks);
         }else {
             loaderManager.restartLoader(loaderId,bundle,callbacks);
+        }
+
+        Bundle reviewBundle = new Bundle();
+        reviewBundle.putString(MOVIE_ID,Integer.toString(mMovie.getMovieId()));
+        if (savedInstanceState == null) {
+            LoaderManager reviewsLoaderManager = getSupportLoaderManager();
+            Loader<MovieReview> moviesReviewsLoader = loaderManager.getLoader(MOVIE_REVIEW_LOADER);
+
+            if (moviesReviewsLoader == null) {
+                loaderManager.initLoader(MOVIE_REVIEW_LOADER, reviewBundle, this);
+            } else {
+                loaderManager.restartLoader(MOVIE_REVIEW_LOADER, reviewBundle, this);
+            }
+        } else {
+            stringReviews = savedInstanceState.getString("movieReviews");
+            mReview.setText(stringReviews);
         }
 
         mButton.setOnClickListener(new View.OnClickListener() {
@@ -144,58 +174,74 @@ public class MoviesDetailActivity extends AppCompatActivity implements
 
     @NonNull
     @Override
-    public Loader<Movie> onCreateLoader(int id, @Nullable Bundle args) {
+    public Loader<Movie> onCreateLoader(int id, @Nullable final Bundle args) {
         return new AsyncTaskLoader<Movie>(this) {
+
             Movie mMovieDetail = mMovie;
 
+            @Override
+            protected void onStartLoading() {
+                if (mMovieDetail != null){
+                    deliverResult(mMovieDetail);
+
+                } else {
+                    forceLoad();
+                }
+            }
 
             @Nullable
             @Override
             public Movie loadInBackground() {
-                int movieID = mMovieDetail.getMovieId();
-
-                URL movieReviewUrl = NetworkUtils.createUrl(MOVIE_BASE_URL+movieID+"reviews"
-                +"?api_key="+API_KEY);
+                int movieId = mMovieDetail.getMovieId();
+                URL movieReviewUrl = NetworkUtils
+                        .createUrl(MOVIE_BASE_URL+movieId+"/reviews"+"?api_key="+API_KEY);
                 try {
-                    getMovieReviews(movieReviewUrl);
-                    setFavorite(movieID);
+
+
+                    mReview.setText(getMovieReviews(movieReviewUrl));
                     return mMovieDetail;
-                } catch (Exception e) {
-                    return null;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
+                return mMovieDetail;
+            }
+
+            private String getMovieReviews(URL movieReviewUrl) throws IOException, JSONException {
+                return NetworkUtils.getMovieInfo(movieReviewUrl);
+                //mMovieDetail.setMovieReview(NetworkUtils.reviewJson(reviewResponse));
 
             }
 
-            private void setFavorite(int movieID) {
-                if (movieID == mAppDatabase.movieDao.checkForFavorite(movieID)){
-                    favorite=true;
-                }else {
-                    favorite=false;
-                }
-            }
-
-            private void getMovieReviews(URL movieReviewUrl) throws IOException, JSONException {
-                String reviewResponse;
-                reviewResponse = NetworkUtils.getMovieInfo(movieReviewUrl);
-                mMovieDetail.setMovieReview(NetworkUtils.reviewJson(reviewResponse));
-
-            }
         };
+
     }
 
 
 
     @Override
     public void onLoadFinished(@NonNull Loader<Movie> loader, Movie data) {
-        mMovie = data;
-        mMovie.getMovieReview();
+        mMovie=data;
+        loadReviews(data.getMovieReview());
 
     }
 
+    private void loadReviews(List<MovieReview> reviews) {
+        mMovieReviewAdapter.setMovieReviews(reviews);
+        if (null == reviews) {
+            mReviewRecyclerView.setVisibility(View.INVISIBLE);
+        } else {
+            mReviewRecyclerView.setVisibility(View.VISIBLE);
 
+
+        }
+    }
 
     @Override
     public void onLoaderReset(@NonNull Loader<Movie> loader) {
 
     }
+
+
 }
