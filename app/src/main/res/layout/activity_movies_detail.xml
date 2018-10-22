@@ -13,7 +13,7 @@
     android:id="@+id/movie_detail_relative_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_weight="1">
+    android:layout_weight="2">
     <ImageView
         android:id="@+id/movie_poster_detail"
         android:layout_width="match_parent"
@@ -28,7 +28,7 @@
 <RelativeLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_weight="2">
+    android:layout_weight="1">
     <ScrollView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -45,12 +45,7 @@
                 android:layout_alignParentTop="true"
                 android:paddingRight="16dp"/>
 
-            <Button
-                android:id="@+id/movie_trailer_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/view_trailer"
-                android:layout_toRightOf="@id/favorite_button"/>
+
 
         <TextView
             android:id="@+id/movie_rating_detail"
@@ -76,18 +71,42 @@
             android:layout_below="@id/movie_rating_detail"/>
 
         <TextView
+            android:id="@+id/movie_trailer_header"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/movie_synopsis_detail"
             android:paddingTop="16dp"
             android:paddingBottom="8dp"
-            android:text="@string/movie_review"/>
+            android:text="@string/movie_trailers_header"
+            android:textStyle="bold"
+            android:textSize="20sp"/>
 
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/movie_review_recyclerview"
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:id="@+id/movie_trailer_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/movie_synopsis_detail"
+            android:layout_below="@id/movie_trailer_header"
+            android:paddingBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/movie_review_header"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/movie_trailer_list"
+            android:paddingTop="16dp"
+            android:paddingBottom="8dp"
+            android:text="@string/movie_review"
+            android:textStyle="bold"
+            android:textSize="20sp"/>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:id="@+id/movie_review_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/movie_review_header"
             android:paddingBottom="8dp"/>
 
 

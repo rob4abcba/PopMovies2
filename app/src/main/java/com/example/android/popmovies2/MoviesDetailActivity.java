@@ -2,6 +2,7 @@ package com.example.android.popmovies2;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -14,19 +15,21 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.URL;
 
-public class MoviesDetailActivity extends AppCompatActivity implements
-        LoaderManager.LoaderCallbacks<Movie>{
+public class MoviesDetailActivity extends AppCompatActivity {
 
     private static final String MOVIE_KEY = "MOVIE_KEY";
 
@@ -34,15 +37,22 @@ public class MoviesDetailActivity extends AppCompatActivity implements
     private TextView mRating;
     private TextView mReleaseDate;
     private TextView mSynopsis;
-    private TextView mReview;
+    private int mMovieId;
+    private LinearLayout mReview;
+    private LinearLayout mTrailers;
     private RelativeLayout mRelativeLayout;
     private LinearLayoutManager mReviewLayout;
     private RecyclerView mReviewRecyclerView;
-    private MovieReviewAdapter mMovieReviewAdapter;
+    //private MovieReviewAdapter mMovieReviewAdapter;
     private Button mButton;
     private AppDatabase mAppDatabase;
     private boolean favorite;
     private Movie mMovie;
+    private String[] mTrailerKeys;
+    private String[] mTrailerNames;
+    private String[] mReviewAuthors;
+    private String[] mReviewContent;
+    private final String TRAILER_BASE_URL = "http://youtube.com/watch?v=";
     private static final int MOVIE_LOADER_ID = 50;
     private static final String MOVIE_BASE_URL = "https://api.themoviedb.org/3/movie/";
     private static final String API_KEY = BuildConfig.API_KEY;
@@ -60,142 +70,160 @@ public class MoviesDetailActivity extends AppCompatActivity implements
         mRating = (TextView) findViewById(R.id.movie_rating_detail);
         mReleaseDate = (TextView) findViewById(R.id.movie_release_date_detail);
         mSynopsis = (TextView) findViewById(R.id.movie_synopsis_detail);
-        mReview = findViewById(R.id.moviereviewtext);
+        mReview = findViewById(R.id.movie_review_list);
+        mTrailers = findViewById(R.id.movie_trailer_list);
 
-        mReviewRecyclerView = findViewById(R.id.movie_review_recyclerview);
+        /*mReviewRecyclerView = findViewById(R.id.movie_review_recyclerview);
         mReviewLayout = new LinearLayoutManager(this);
         mReviewRecyclerView.setLayoutManager(mReviewLayout);
         mMovieReviewAdapter = new MovieReviewAdapter();
-        mReviewRecyclerView.setAdapter(mMovieReviewAdapter);
+        mReviewRecyclerView.setAdapter(mMovieReviewAdapter);*/
 
         Picasso.with(this).load(mMovie.getPosterPath()).into(mPoster);
         mRating.setText(Double.toString(mMovie.getRating())+" out of 10 stars");
         mReleaseDate.setText("     " + mMovie.getReleaseDate());
         mSynopsis.setText(mMovie.getSynopsis());
+        mMovieId = mMovie.getMovieId();
 
-        mButton = findViewById(R.id.favorite_button);
-        favorite = false;
-        mAppDatabase = AppDatabase.getInstance(getApplicationContext());
+        new GetTrailers().execute();
+        new GetReviews().execute();
 
-        Intent intent = getIntent();
+    }
 
-        if (intent.hasExtra("Movie")){
-            mMovie = intent.getExtras().getParcelable("Movie");
+    public class GetTrailers extends AsyncTask<String, Void, String>{
+
+
+        @Override
+        protected String doInBackground(String... strings) {
+
+            try {
+                URL trailersUrl = NetworkUtils.buildTrailerUrl(String.valueOf(mMovieId));
+                return NetworkUtils.getMovieInfo(trailersUrl);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
         }
 
-        final int loaderId = MOVIE_LOADER_ID;
+        @Override
+        protected void onPostExecute(String result) {
+            getTrailerData(result);
+            loadTrailers();
+        }
+    }
 
-        final LoaderManager.LoaderCallbacks<Movie> callbacks = MoviesDetailActivity.this;
-        final Bundle bundle = null;
+    public void getTrailerData(String trailerJsonResponse){
+        try {
+            JSONObject trailerObject = new JSONObject(trailerJsonResponse);
+            JSONArray trailerArray = trailerObject.getJSONArray("results");
+            mTrailerKeys = new String[trailerArray.length()];
+            mTrailerNames = new String[trailerArray.length()];
+            for (int i = 0; i < trailerArray.length(); i++){
+                mTrailerKeys[i] = trailerArray.getJSONObject(i).optString("key");
+                mTrailerNames[i] = trailerArray.getJSONObject(i).optString("name");
+            }
 
-        LoaderManager loaderManager = getSupportLoaderManager();
-        Loader<Movie> detailLoader = loaderManager.getLoader(loaderId);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
 
-        if (detailLoader==null){
-            loaderManager.initLoader(loaderId,bundle,callbacks);
+    private void loadTrailers(){
+        if (mTrailerKeys.length == 0){
+            TextView noTrailers = new TextView(this);
+            noTrailers.setText("No Trailers Available");
+            noTrailers.setTextSize(12);
+            mTrailers.addView(noTrailers);
+
         }else {
-            loaderManager.restartLoader(loaderId,bundle,callbacks);
+            for (int i = 0; i < mTrailerKeys.length; i++){
+                Button trailerItem = new Button(this);
+                trailerItem.setText(mTrailerNames[i]);
+                trailerItem.setTextSize(12);
+                final String trailerUrl = TRAILER_BASE_URL + mTrailerKeys[i];
+                trailerItem.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Uri youtubeLink = Uri.parse(trailerUrl);
+                        Intent youtubeIntent = new Intent(Intent.ACTION_VIEW, youtubeLink);
+                        if (youtubeIntent.resolveActivity(getPackageManager()) != null){
+                            startActivity(youtubeIntent);
+                        }
+                    }
+                });
+                mTrailers.addView(trailerItem);
+            }
+
         }
 
-        mButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int id = mMovie.getMovieId();
-                String title = mMovie.getTitle();
-                String posterPath = mMovie.getPosterPath();
-                String synopsis = mMovie.getSynopsis();
-                Double rating = mMovie.getRating();
-                String releaseDate = mMovie.getReleaseDate();
+    }
 
-                final Movie movie = new Movie(id,title,posterPath,synopsis,rating,releaseDate);
+    public class GetReviews extends AsyncTask<String, Void, String>{
 
-                if (favorite){
-                    AppExecutors.getInstance().getDiskIO().execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            mAppDatabase.movieDao.deleteFavoriteMovie(movie);
-                            favorite=false;
-                            Toast.makeText(getApplicationContext(),
-                                    "Movie removed from favories!",
-                                    Toast.LENGTH_LONG).show();
-                        }
-                    });
-                } else {
-                    AppExecutors.getInstance().getDiskIO().execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            mAppDatabase.movieDao.insertFavoriteMovie(movie);
-                            favorite=true;
-                            Toast.makeText(getApplicationContext(),
-                                    "Movie added to favorites!",
-                                    Toast.LENGTH_LONG).show();
-                        }
-                    });
-                }
-                getSupportLoaderManager().initLoader(loaderId,bundle,callbacks);
+        @Override
+        protected String doInBackground(String... strings) {
+
+            try {
+                URL reviewsUrl = NetworkUtils.buildReviewsUrl(String.valueOf(mMovieId));
+                return NetworkUtils.getMovieInfo(reviewsUrl);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            getReviewData(s);
+            loadReviews();
+        }
+    }
+
+    public void getReviewData(String reviewJsonResponse){
+        try {
+            JSONObject reviewObject = new JSONObject(reviewJsonResponse);
+            JSONArray reviewArray = reviewObject.getJSONArray("results");
+            mReviewAuthors = new String[reviewArray.length()];
+            mReviewContent = new String[reviewArray.length()];
+            for (int i = 0; i < reviewArray.length(); i++){
+                mReviewAuthors[i] = reviewArray.getJSONObject(i).optString("author");
+                mReviewContent[i] = reviewArray.getJSONObject(i).optString("content");
+            }
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void loadReviews(){
+        if (mReviewContent.length == 0){
+            TextView noReviews = new TextView(this);
+            noReviews.setText("No Reviews Available");
+            noReviews.setTextSize(12);
+            mReview.addView(noReviews);
+
+        }else {
+            for (int i = 0; i < mReviewContent.length; i++){
+                TextView reviewAuthor = new TextView(this);
+                TextView reviewContent = new TextView(this);
+                reviewAuthor.setText("Author: " + mReviewAuthors[i]);
+                reviewAuthor.setTextSize(14);
+                reviewContent.setText(mReviewContent[i] + "\n\n\n");
+                reviewContent.setTextSize(12);
+
+                mReview.addView(reviewAuthor);
+                mReview.addView(reviewContent);
+
 
             }
-        });
+
+        }
 
     }
 
 
 
 
-    @NonNull
-    @Override
-    public Loader<Movie> onCreateLoader(int id, @Nullable Bundle args) {
-        return new AsyncTaskLoader<Movie>(this) {
-            Movie mMovieDetail = mMovie;
 
-
-            @Nullable
-            @Override
-            public Movie loadInBackground() {
-                int movieID = mMovieDetail.getMovieId();
-
-                URL movieReviewUrl = NetworkUtils.createUrl(MOVIE_BASE_URL+movieID+"reviews"
-                +"?api_key="+API_KEY);
-                try {
-                    getMovieReviews(movieReviewUrl);
-                    setFavorite(movieID);
-                    return mMovieDetail;
-                } catch (Exception e) {
-                    return null;
-                }
-
-            }
-
-            private void setFavorite(int movieID) {
-                if (movieID == mAppDatabase.movieDao.checkForFavorite(movieID)){
-                    favorite=true;
-                }else {
-                    favorite=false;
-                }
-            }
-
-            private void getMovieReviews(URL movieReviewUrl) throws IOException, JSONException {
-                String reviewResponse;
-                reviewResponse = NetworkUtils.getMovieInfo(movieReviewUrl);
-                mMovieDetail.setMovieReview(NetworkUtils.reviewJson(reviewResponse));
-
-            }
-        };
-    }
-
-
-
-    @Override
-    public void onLoadFinished(@NonNull Loader<Movie> loader, Movie data) {
-        mMovie = data;
-        mMovie.getMovieReview();
-
-    }
-
-
-
-    @Override
-    public void onLoaderReset(@NonNull Loader<Movie> loader) {
-
-    }
 }

@@ -1,5 +1,6 @@
 package com.example.android.popmovies2;
 
+import android.net.Uri;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -20,6 +21,13 @@ import java.util.List;
 public class NetworkUtils {
     private static final String LOG_TAG = NetworkUtils.class.getSimpleName();
     private static final String MOVIE_IMAGE_PATH = "http://image.tmdb.org/t/p/w185/";
+    private static final String MOVIE_BASE_URL = "https://api.themoviedb.org/";
+    private static final String API_VERSION = "3";
+    private static final String MOVIE = "movie";
+    private static final String VIDEOS = "videos";
+    private static final String REVIEWS = "reviews";
+    private static final String API_KEY_PARAM = "api_key";
+
 
     private NetworkUtils(){}
 
@@ -131,18 +139,40 @@ public class NetworkUtils {
 
     }
 
-    public static MovieReview[] reviewJson(String reviewJsonData) throws JSONException {
-        JSONObject reviewObject = new JSONObject(reviewJsonData);
-        JSONArray jsonArray = reviewObject.getJSONArray("results");
-        MovieReview[] movieReviews = new MovieReview[jsonArray.length()];
 
-        for (int i = 0; i < jsonArray.length(); i++){
-            MovieReview review = new MovieReview();
-            JSONObject result = jsonArray.getJSONObject(i);
-            review.setReviewContent(result.getString("content"));
-            movieReviews[i] = review;
+
+    public static URL buildTrailerUrl(String movieId){
+        Uri uri = Uri.parse(MOVIE_BASE_URL).buildUpon()
+                .appendPath(API_VERSION)
+                .appendPath(MOVIE)
+                .appendPath(movieId)
+                .appendPath(VIDEOS)
+                .appendQueryParameter(API_KEY_PARAM, BuildConfig.API_KEY)
+                .build();
+        URL url = null;
+        try {
+            url = new URL(uri.toString());
+        }catch (MalformedURLException e){
+            e.printStackTrace();
         }
-        return movieReviews;
+        return url;
+    }
+
+    public static URL buildReviewsUrl(String movieId){
+        Uri uri = Uri.parse(MOVIE_BASE_URL).buildUpon()
+                .appendPath(API_VERSION)
+                .appendPath(MOVIE)
+                .appendPath(movieId)
+                .appendPath(REVIEWS)
+                .appendQueryParameter(API_KEY_PARAM, BuildConfig.API_KEY)
+                .build();
+        URL url = null;
+        try {
+            url = new URL(uri.toString());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return url;
 
     }
 

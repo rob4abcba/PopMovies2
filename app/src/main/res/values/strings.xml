@@ -20,5 +20,6 @@
     <string name="settings_menu_item">Sort options</string>
     <string name="toggle_favorite">Toggle Favorite</string>
     <string name="view_trailer">View Trailer</string>
-    <string name="movie_review">Movie Review</string>
+    <string name="movie_review">Movie Reviews</string>
+    <string name="movie_trailers_header">Movie Trailers</string>
 </resources>

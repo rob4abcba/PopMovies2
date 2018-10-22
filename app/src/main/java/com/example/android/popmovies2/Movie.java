@@ -16,10 +16,7 @@ public class Movie implements Parcelable{
     private String synopsis;
     private double rating;
     private String releaseDate;
-    @Ignore
-    private MovieReview[] movieReview;
-    @Ignore
-    private MovieTrailer[] movieTrailer;
+
 
     public Movie(){}
 
@@ -84,21 +81,7 @@ public class Movie implements Parcelable{
         this.releaseDate = releaseDate;
     }
 
-    public MovieReview[] getMovieReview() {
-        return movieReview;
-    }
 
-    public void setMovieReview(MovieReview[] movieReview){
-        this.movieReview = movieReview;
-    }
-
-    public MovieTrailer[] getMovieTrailer() {
-        return movieTrailer;
-    }
-
-    public void setMovieTrailer(MovieTrailer[] movieTrailer){
-        this.movieTrailer = movieTrailer;
-    }
 
     public static final Creator<Movie> CREATOR = new Creator<Movie>(){
 
@@ -121,8 +104,7 @@ public class Movie implements Parcelable{
         synopsis = in.readString();
         releaseDate = in.readString();
         rating = in.readDouble();
-        movieReview = in.createTypedArray(MovieReview.CREATOR);
-        movieTrailer = in.createTypedArray(MovieTrailer.CREATOR);
+
     }
 
     @Override
@@ -138,8 +120,7 @@ public class Movie implements Parcelable{
         dest.writeString(synopsis);
         dest.writeString(releaseDate);
         dest.writeDouble(rating);
-        dest.writeTypedArray(movieReview, 0);
-        dest.writeTypedArray(movieTrailer, 0);
+
 
     }
 }
