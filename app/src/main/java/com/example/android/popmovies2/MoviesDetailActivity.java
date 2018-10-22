@@ -43,7 +43,6 @@ public class MoviesDetailActivity extends AppCompatActivity {
     private RelativeLayout mRelativeLayout;
     private LinearLayoutManager mReviewLayout;
     private RecyclerView mReviewRecyclerView;
-    //private MovieReviewAdapter mMovieReviewAdapter;
     private Button mButton;
     private AppDatabase mAppDatabase;
     private boolean favorite;
@@ -72,12 +71,6 @@ public class MoviesDetailActivity extends AppCompatActivity {
         mSynopsis = (TextView) findViewById(R.id.movie_synopsis_detail);
         mReview = findViewById(R.id.movie_review_list);
         mTrailers = findViewById(R.id.movie_trailer_list);
-
-        /*mReviewRecyclerView = findViewById(R.id.movie_review_recyclerview);
-        mReviewLayout = new LinearLayoutManager(this);
-        mReviewRecyclerView.setLayoutManager(mReviewLayout);
-        mMovieReviewAdapter = new MovieReviewAdapter();
-        mReviewRecyclerView.setAdapter(mMovieReviewAdapter);*/
 
         Picasso.with(this).load(mMovie.getPosterPath()).into(mPoster);
         mRating.setText(Double.toString(mMovie.getRating())+" out of 10 stars");
@@ -221,9 +214,5 @@ public class MoviesDetailActivity extends AppCompatActivity {
         }
 
     }
-
-
-
-
 
 }
