@@ -38,6 +38,7 @@ public class MoviesDetailActivity extends AppCompatActivity {
     private TextView mReleaseDate;
     private TextView mSynopsis;
     private int mMovieId;
+    private Button mFavoriteButton;
     private LinearLayout mReview;
     private LinearLayout mTrailers;
     private RelativeLayout mRelativeLayout;
@@ -51,6 +52,7 @@ public class MoviesDetailActivity extends AppCompatActivity {
     private String[] mTrailerNames;
     private String[] mReviewAuthors;
     private String[] mReviewContent;
+    private AppDatabase mDatabase;
     private final String TRAILER_BASE_URL = "http://youtube.com/watch?v=";
     private static final int MOVIE_LOADER_ID = 50;
     private static final String MOVIE_BASE_URL = "https://api.themoviedb.org/3/movie/";
@@ -71,17 +73,47 @@ public class MoviesDetailActivity extends AppCompatActivity {
         mSynopsis = (TextView) findViewById(R.id.movie_synopsis_detail);
         mReview = findViewById(R.id.movie_review_list);
         mTrailers = findViewById(R.id.movie_trailer_list);
+        mFavoriteButton = findViewById(R.id.favorite_button);
 
-        Picasso.with(this).load(mMovie.getPosterPath()).into(mPoster);
+                Picasso.with(this).load(mMovie.getPosterPath()).into(mPoster);
         mRating.setText(Double.toString(mMovie.getRating())+" out of 10 stars");
         mReleaseDate.setText("     " + mMovie.getReleaseDate());
         mSynopsis.setText(mMovie.getSynopsis());
         mMovieId = mMovie.getMovieId();
 
+
+
+        mDatabase = AppDatabase.getInstance(getApplicationContext());
+
+        mFavoriteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mMovieId == mDatabase.movieDao.checkForFavorite(mMovieId)){
+                    AppExecutors.getInstance().getDiskIO().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            mDatabase.movieDao.deleteFavoriteMovie(mMovie);
+                            //mFavoriteButton.setText(R.string.toggle_favorite);
+                        }
+                    });
+
+                }else {
+                    AppExecutors.getInstance().getDiskIO().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            mDatabase.movieDao.insertFavoriteMovie(mMovie);
+                            //mFavoriteButton.setText(R.string.remove_favorite);
+                        }
+                    });
+                }
+            }
+        });
+
         new GetTrailers().execute();
         new GetReviews().execute();
 
     }
+
 
     public class GetTrailers extends AsyncTask<String, Void, String>{
 

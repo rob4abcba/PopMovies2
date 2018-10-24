@@ -10,16 +10,16 @@ import android.arch.persistence.room.Query;
 @Dao
 public interface MovieDao {
 
-    @Query("SELECT * FROM `favorite movies` order by title")
+    @Query("SELECT * FROM favoritemovies order by title")
     LiveData<Movie[]> loadLiveMovies();
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertFavoriteMovie(Movie movie);
 
-    @Query("SELECT * FROM `favorite movies` WHERE movieId = :id")
+    @Query("SELECT * FROM favoritemovies WHERE movieId = :id")
     Movie loadMovieByMovieId(String id);
 
-    @Query("SELECT movieId FROM `favorite movies` WHERE movieId = :id")
+    @Query("SELECT movieId FROM favoritemovies WHERE movieId = :id")
     int checkForFavorite(int id);
 
     @Delete

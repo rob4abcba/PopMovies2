@@ -1,5 +1,7 @@
 package com.example.android.popmovies2;
 
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -21,6 +23,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements
@@ -35,6 +38,8 @@ public class MainActivity extends AppCompatActivity implements
     private static final int MOVIE_LOADER_ID = 1;
     private static boolean PREFERENCES_CHANGED = false;
     private static final String API_KEY = BuildConfig.API_KEY;
+    private AppDatabase mDatabase;
+    private String mString;
 
 
     @Override
@@ -53,11 +58,27 @@ public class MainActivity extends AppCompatActivity implements
         mAdapter.setContext(getApplicationContext());
         mRecyclerView.setAdapter(mAdapter);
 
+        mDatabase = AppDatabase.getInstance((getApplicationContext()));
+
 
         getMovies();
 
         PreferenceManager.getDefaultSharedPreferences(this)
                 .registerOnSharedPreferenceChangeListener(this);
+    }
+
+    private void getFavorites(){
+        final LiveData<Movie[]> mFavoriteList = mDatabase.movieDao.loadLiveMovies();
+        mFavoriteList.observe(this, new Observer<Movie[]>() {
+            @Override
+            public void onChanged(@Nullable Movie[] movies) {
+                if (mString.equals(getResources().getString(R.string.sort_by_favorites_value))){
+                    mAdapter.setMovieList(Arrays.asList(movies));
+                }
+
+
+            }
+        });
     }
 
     @Override
