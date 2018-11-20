@@ -83,6 +83,8 @@ public class MoviesDetailActivity extends AppCompatActivity {
 
     }
 
+
+
     public class GetTrailers extends AsyncTask<String, Void, String>{
 
 

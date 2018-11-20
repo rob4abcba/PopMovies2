@@ -7,6 +7,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -16,9 +17,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +31,7 @@ public class MainActivity extends AppCompatActivity implements
         SharedPreferences.OnSharedPreferenceChangeListener{
 
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
+    private static final String BUNDLE_RECYCLER_LAYOUT = "MainActivity.recycler.layout";
     private RecyclerView mRecyclerView;
     private MovieListAdapter mAdapter;
     private static final String MOVIE_BASE_URL = "https://api.themoviedb.org/3/movie/";
@@ -46,18 +50,44 @@ public class MainActivity extends AppCompatActivity implements
 
 
 
-        mRecyclerView = (RecyclerView) findViewById(R.id.recyclerview);
-        mRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
-        mAdapter = new MovieListAdapter(this);
-        mAdapter.setMovieList(new ArrayList<Movie>());
-        mAdapter.setContext(getApplicationContext());
-        mRecyclerView.setAdapter(mAdapter);
+            mRecyclerView = (RecyclerView) findViewById(R.id.recyclerview);
+            mRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+            mAdapter = new MovieListAdapter(this);
+            mAdapter.setMovieList(new ArrayList<Movie>());
+            mAdapter.setContext(getApplicationContext());
+            mRecyclerView.setAdapter(mAdapter);
 
 
-        getMovies();
+            getMovies();
 
-        PreferenceManager.getDefaultSharedPreferences(this)
-                .registerOnSharedPreferenceChangeListener(this);
+            PreferenceManager.getDefaultSharedPreferences(this)
+                    .registerOnSharedPreferenceChangeListener(this);
+
+            Log.i(LOG_TAG, "called onCreate");
+
+
+
+    }
+
+
+
+
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable(BUNDLE_RECYCLER_LAYOUT,
+                mRecyclerView.getLayoutManager().onSaveInstanceState());
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        if (savedInstanceState != null){
+            Parcelable savedRecyclerLayoutState =
+                    savedInstanceState.getParcelable(BUNDLE_RECYCLER_LAYOUT);
+            mRecyclerView.getLayoutManager().onRestoreInstanceState(savedRecyclerLayoutState);
+        }
     }
 
     @Override
